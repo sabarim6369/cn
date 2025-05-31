@@ -14,7 +14,11 @@ const examples = [
   '10.pkt',
   'distance vector exp 3.pkt',
   'Linkstaterouting.pkt',
-  '2.pkt'
+  '2.pkt',
+  '1.a) i).pkt',
+  '1.a) ii).pkt',
+  '1.b) i).pkt',
+  '1.b) ii).pkt',
   
   // ... add more filenames as needed
 ];
