@@ -101,20 +101,19 @@ valid([Q|Others]) :-
     no_attack(Q, Others, 1),
     valid(Others).
 
-% Diagonal and row check
+% Diagonal and row check (ensure no attacks)
 no_attack(_, [], _).
 no_attack(Q, [Q1|Others], Dist) :-
-    Q =\= Q1,
-    abs(Q - Q1) =\= Dist,
-    Next is Dist + 1,
-    no_attack(Q, Others, Next).
+    Q =\= Q1,                         % Not in the same row
+    abs(Q - Q1) =\= Dist,             % Not on the same diagonal
+    NextDist is Dist + 1,
+    no_attack(Q, Others, NextDist).
 
-% Main predicate to solve
+% Main predicate to solve 4-Queens
 four_queens(Pos) :-
     Pos = [Q1, Q2, Q3, Q4],
     permutation([1, 2, 3, 4], Pos),
     valid(Pos).
-
 `,
       },
       {
@@ -129,7 +128,7 @@ four_queens(Pos) :-
   },
   {
     id: 7,
-    title: "Pac-Man Navigation using BFS (Python)😎😎",
+    title: "Pac-Man Navigation using BFS (Python)",
     subdivisions: [
       {
         id: "Python Program",
@@ -192,10 +191,25 @@ print("Shortest Path:", shortest_path)
       {
         id: "A* Algorithm Implementation",
         title: "A* Algorithm Implementation",
-        content: `import heapq
+        content: `
+import heapq
 
-moves = [(-1,0), (1,0), (0,-1), (0,1)]
+# 4-directional movement
+moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
+# Terrain movement costs
+terrain_costs = {
+    '.': 1,   # Open path
+    '#': 100, # Wall (very high cost)
+    'G': 1,   # Goal
+    'S': 1    # Start
+}
+
+# Heuristic function (Manhattan distance)
+def heuristic(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+# A* Search algorithm
 def astar_search(grid, start, goal):
     rows, cols = len(grid), len(grid[0])
     open_set = []
@@ -205,6 +219,7 @@ def astar_search(grid, start, goal):
 
     while open_set:
         _, current = heapq.heappop(open_set)
+
         if current == goal:
             path = []
             while current in came_from:
@@ -217,13 +232,32 @@ def astar_search(grid, start, goal):
             nr, nc = current[0] + dr, current[1] + dc
             if 0 <= nr < rows and 0 <= nc < cols:
                 terrain = grid[nr][nc]
-                new_cost = cost_so_far[current] + terrain_costs[terrain]
+                if terrain == '#':
+                    continue  # Skip walls entirely
+                new_cost = cost_so_far[current] + terrain_costs.get(terrain, 1)
                 if (nr, nc) not in cost_so_far or new_cost < cost_so_far[(nr, nc)]:
                     cost_so_far[(nr, nc)] = new_cost
                     priority = new_cost + heuristic((nr, nc), goal)
                     heapq.heappush(open_set, (priority, (nr, nc)))
                     came_from[(nr, nc)] = current
+
     return "No path found"
+
+# Example grid
+grid = [
+    ['S', '.', '.', '#', '.', '.', '.'],
+    ['.', '#', '.', '.', '.', '#', '.'],
+    ['.', '#', '.', '.', '.', '.', '.'],
+    ['.', '.', '#', '#', '.', '.', '.'],
+    ['#', '.', '#', 'G', '.', '#', '.']
+]
+
+start = (0, 0)
+goal = (4, 3)
+
+# Run A* and print path
+path = astar_search(grid, start, goal)
+print("Path found:" if isinstance(path, list) else "No path:", path)
 
 
 `,
@@ -348,41 +382,44 @@ delivery_points = ["A", "B", "C", "D", "E", "F", "G", "H"]
 def generate_population(size):
     return [random.sample(delivery_points, len(delivery_points)) for _ in range(size)]
 
-# Fitness Function (lower distance = higher score)
+# Fitness Function: negative sum of "distances"
 def fitness(route):
     return -sum(abs(ord(route[i]) - ord(route[i+1])) for i in range(len(route) - 1))
 
-# Selection (Top 2 Routes)
+# Selection: top 2
 def selection(pop):
     return sorted(pop, key=fitness, reverse=True)[:2]
 
-# Crossover (Two-Point)
+# Order Crossover (OX)
 def crossover(p1, p2):
-    pt1, pt2 = sorted(random.sample(range(len(p1)), 2))
-    c1 = p1[:pt1] + p2[pt1:pt2] + p1[pt2:]
-    c2 = p2[:pt1] + p1[pt1:pt2] + p2[pt2:]
-    return c1, c2
+    size = len(p1)
+    a, b = sorted(random.sample(range(size), 2))
+    middle = p1[a:b]
+    remainder = [x for x in p2 if x not in middle]
+    child = remainder[:a] + middle + remainder[a:]
+    return child
 
-# Mutation (Swap)
+# Mutation: simple swap
 def mutation(route):
     i, j = random.sample(range(len(route)), 2)
     route[i], route[j] = route[j], route[i]
     return route
 
-# Main GA
+# Main GA Loop
 def genetic_algorithm(generations, pop_size):
     population = generate_population(pop_size)
     for _ in range(generations):
         parents = selection(population)
         offspring = []
-        for _ in range(pop_size // 2):
-            c1, c2 = crossover(parents[0], parents[1])
-            offspring.extend([mutation(c1), mutation(c2)])
+        while len(offspring) < pop_size:
+            child1 = crossover(parents[0], parents[1])
+            child2 = crossover(parents[1], parents[0])
+            offspring.extend([mutation(child1), mutation(child2)])
         population = offspring
     return sorted(population, key=fitness, reverse=True)[0]
 
 # Run
-optimal_route = genetic_algorithm(generations=100, population_size=20)
+optimal_route = genetic_algorithm(generations=100, pop_size=20)
 print("Optimal delivery route:", optimal_route)
 
 `,
@@ -427,6 +464,100 @@ def simulated_annealing(network, T=100, cooling=0.95, min_T=0.1):
 # Run
 opt_net = simulated_annealing(connections)
 print("Optimized network configuration:", opt_net)
+
+`,
+      },
+     
+    ],
+  },
+  {
+    id: 12,
+    title: "  Smart Home Automation using Propositional Logic",
+    subdivisions: [
+      {
+        id: "  Smart Home Automation using Propositional Logic",
+        title: "  Smart Home Automation using Propositional Logic",
+        content: `from sympy import symbols
+
+# Define propositional symbols
+M = symbols("MotionDetected")
+D = symbols("DoorOpen")
+T = symbols("TemperatureDrop")
+O = symbols("OccupancyChange")
+N = symbols("NewDevice")
+
+# Inference rules
+rules = {
+    "LightsOn": M,
+    "HeaterOn": T,
+    "SecurityAlert": D,
+    "UpdateOccupancy": O,
+    "ConfigureDevice": N
+}
+
+# Infer actions from sensor data
+def infer_actions(sensor_data):
+    return [action for action, condition in rules.items() if condition in sensor_data]
+
+# Example sensor input
+sensor_data = {M, T, O}
+actions = infer_actions(sensor_data)
+print("Smart Home Actions Taken:", actions)
+
+`,
+      },
+     
+    ],
+  },
+  {
+    id: 13,
+    title: "   Medical Diagnosis using Predicate Logic & Resolution",
+    subdivisions: [
+      {
+        id: "  Medical Diagnosis using Predicate Logic & Resolution",
+        title: " Medical Diagnosis using Predicate Logic & Resolution",
+        content: `class KnowledgeBase:
+    def __init__(self):
+        self.facts = []
+        self.rules = []
+
+    def add_fact(self, fact):
+        self.facts.append(fact)
+
+    def add_rule(self, premise, conclusion):
+        self.rules.append((premise, conclusion))
+
+    def infer(self, query):
+        inferred = set()
+        pending = [query]
+        while pending:
+            current = pending.pop()
+            if current in self.facts:
+                inferred.add(current)
+                continue
+            for premise, conclusion in self.rules:
+                if current == conclusion and all(p in inferred or p in self.facts for p in premise):
+                    inferred.add(current)
+                    pending.extend(premise)
+        return query in inferred
+
+# Initialize knowledge base
+kb = KnowledgeBase()
+
+# Add symptom facts
+kb.add_fact("has_symptom(Patient, Fever)")
+kb.add_fact("has_symptom(Patient, Cough)")
+
+# Add rules for disease diagnosis and treatment
+kb.add_rule(["has_symptom(Patient, Fever)", "has_symptom(Patient, Cough)"], "has_disease(Patient, Flu)")
+kb.add_rule(["has_disease(Patient, Flu)"], "treatment_for(Flu, Antiviral)")
+
+# Run inference queries
+diagnosis = kb.infer("has_disease(Patient, Flu)")
+treatment = kb.infer("treatment_for(Flu, Antiviral)")
+
+print(f"Diagnosis for Patient: {'Flu' if diagnosis else 'Unknown'}")
+print(f"Recommended Treatment: {'Antiviral' if treatment else 'No Treatment Suggested'}")
 
 `,
       },
