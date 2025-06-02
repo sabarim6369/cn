@@ -17,7 +17,6 @@ export default function App() {
   if (selectedExpId === null) {
     return (
       <div style={{ padding: "10px" }}>
-        <h2>Lab Practical Experiments</h2>
         <ul style={{ paddingLeft: 0 }}>
           {experimentsData.map((exp) => (
             <li
